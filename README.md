@@ -1,3 +1,5 @@
+I forged this repo so that I could make changes to the Python port. Specifically, I want to make changes so that the output (especially HTML) is not dependent upon a Jupyter Notebook environment. The aim is to use it as a library for [Criticus](https://github.com/d-flood/criticus/).
+
 [CollateX](http://collatex.net/) is a software to
 
  1. read **multiple (≥ 2) versions of a text**, splitting each version into parts (tokens) to be compared,

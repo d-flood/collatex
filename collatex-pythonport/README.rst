@@ -12,6 +12,11 @@ CollateX-Python
 		:target: https://pypi.python.org/pypi/collatex
 
 
+Why I Forked This Repo
+----------------------
+- To modify output (especially HTML) so that a Jupyter environment is not necessary.
+- To enable the python port to be used as a library in my other projects, especially https://github.com/d-flood/criticus
+
 CollateX is a software to
 
 - read multiple (>= 2) versions of a text, splitting each version into parts (tokens) to be compared,
