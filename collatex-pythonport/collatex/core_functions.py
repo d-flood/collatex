@@ -12,7 +12,7 @@ from collatex.experimental_astar_aligner import ExperimentalAstarAligner
 import json
 from collatex.edit_graph_aligner import EditGraphAligner
 from collatex.display_module import display_alignment_table_as_html, visualize_table_vertically_with_colors, visualize_table_horizontally_with_colors
-from collatex.display_module import display_variant_graph_as_svg
+# from collatex.display_module import display_variant_graph_as_svg
 from collatex.display_module import display_alignment_table_as_csv
 from collatex.near_matching import perform_near_match
 
@@ -33,7 +33,7 @@ from collatex.near_matching import perform_near_match
 def collate(collation, basetext_siglum: str, output="table", layout="horizontal", 
             segmentation=True, near_match=False, astar=False,
             detect_transpositions=False, debug_scores=False, 
-            properties_filter=None, indent=False, graph_type: str='svg',
+            properties_filter=None, indent=False, 
             sort_by_agreement: bool=False, ignore_case_in_html2: bool = False):
     # collation may be collation or json; if it's the latter, use it to build a real collation
     if isinstance(collation, dict):
@@ -65,10 +65,10 @@ def collate(collation, basetext_siglum: str, output="table", layout="horizontal"
         join(graph)
         ranking = VariantGraphRanking.of(graph)
     # check which output format is requested: graph or table
-    if output == "svg" or output == "svg_simple":
-        return display_variant_graph_as_svg(graph, output, graph_type)
-    if output == "graph":
-        return graph
+    # if output == "svg" or output == "svg_simple":
+    #     return display_variant_graph_as_svg(graph, output, graph_type)
+    # if output == "graph":
+    #     return graph
     # create alignment table
     table = AlignmentTable(collation, graph, layout, ranking)
     if output == "json":
