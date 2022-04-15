@@ -91,7 +91,7 @@ __author__  = 'Philippe Lagadec'
 #--- CONSTANTS -----------------------------------------------------------------
 
 # Table style to get thin black lines in Mozilla/Firefox instead of 3D borders
-TABLE_STYLE_THINBORDER = "border: 1px solid #000000; border-collapse: collapse;"
+TABLE_STYLE_THINBORDER = "border: 1px solid #000000; border-collapse: collapse; margin-left: 10pt; margin-top: 20pt;"
 #TABLE_STYLE_THINBORDER = "border: 1px solid #000000;"
 
 
