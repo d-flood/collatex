@@ -31,7 +31,7 @@ from collatex.near_matching import perform_near_match
 #   indent=True pretty-prints the output
 #       (for proofreading convenience only; does not observe proper white-space behavior)
 def collate(collation, output="table", layout="horizontal", segmentation=True, near_match=False, astar=False,
-            detect_transpositions=False, debug_scores=False, properties_filter=None, indent=False):
+            detect_transpositions=False, debug_scores=False, properties_filter=None, indent=False, graph_type: str='svg'):
     # collation may be collation or json; if it's the latter, use it to build a real collation
     if isinstance(collation, dict):
         json_collation = Collation()
@@ -63,7 +63,7 @@ def collate(collation, output="table", layout="horizontal", segmentation=True, n
         ranking = VariantGraphRanking.of(graph)
     # check which output format is requested: graph or table
     if output == "svg" or output == "svg_simple":
-        return display_variant_graph_as_svg(graph, output)
+        return display_variant_graph_as_svg(graph, output, graph_type)
     if output == "graph":
         return graph
     # create alignment table
