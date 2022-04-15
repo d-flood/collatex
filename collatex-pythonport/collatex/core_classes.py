@@ -75,8 +75,8 @@ class AlignmentTable(object):
         self.collation = collation
         self.graph = graph
         self.layout = layout
-        self.columns = []
-        self.rows = []
+        self.columns = [] #type: list[Column]
+        self.rows = [] #type: list[Row]
         if graph:
             self._construct_table(ranks)
 
