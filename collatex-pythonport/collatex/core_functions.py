@@ -34,7 +34,7 @@ def collate(collation, basetext_siglum: str, output="table", layout="horizontal"
             segmentation=True, near_match=False, astar=False,
             detect_transpositions=False, debug_scores=False, 
             properties_filter=None, indent=False, graph_type: str='svg',
-            sort_by_agreement: bool=False):
+            sort_by_agreement: bool=False, ignore_case_in_html2: bool = False):
     # collation may be collation or json; if it's the latter, use it to build a real collation
     if isinstance(collation, dict):
         json_collation = Collation()
@@ -78,7 +78,7 @@ def collate(collation, basetext_siglum: str, output="table", layout="horizontal"
     if output == "html2" and layout == "vertical":
         return visualize_table_vertically_with_colors(table, collation)
     if output == "html2" and layout == "horizontal":
-        return visualize_table_horizontally_with_colors(table, collation, basetext_siglum, sort_by_agreement)
+        return visualize_table_horizontally_with_colors(table, collation, segmentation, basetext_siglum, sort_by_agreement, ignore_case_in_html2)
     if output == "table":
         return table
     if output == "xml":
