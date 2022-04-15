@@ -8,6 +8,7 @@ from collections import defaultdict
 from textwrap import fill
 from collatex.HTML import Table, TableRow, TableCell
 from collatex.core_classes import create_table_visualization, VariantGraphRanking
+import collatex.core_classes as cc
 import re
 import csv
 import io
@@ -15,9 +16,8 @@ import io
 
 # optionally load the IPython dependencies
 try:
-    from IPython.display import HTML
-    from IPython.display import SVG
-    from IPython.core.display import display
+    # d-flood: removed IPython support in favor of opening a file in a new browser tab
+
     # import graphviz python bindings
     import graphviz
 except:
@@ -32,20 +32,42 @@ def visualize_table_vertically_with_colors(table, collation):
         cells = []
         for witness in collation.witnesses:
             cell = column.tokens_per_witness.get(witness.sigil)
-            cells.append(TableCell(text=fill("".join(item.token_data["t"] for item in cell) if cell else "-", 20), bgcolor="FF0000" if column.variant else "00FFFF"))
+            cells.append(TableCell(text=fill("".join(item.token_data["t"] for item in cell) if cell else "-", 20), bgcolor="FF0000" if column.variant else "00FFFF", style='text-align: center'))
         rows.append(TableRow(cells=cells))
     sigli = []
     for witness in collation.witnesses:
         sigli.append(witness.sigil)
     x = Table(header_row=sigli, rows=rows)
-    return display(HTML(str(x)))
+    return str(x)
+
+def visualize_table_horizontally_with_colors(table: cc.AlignmentTable, collation, basetext_siglum: str, sort_by_agreement):
+    '''Return a horizontal HTML table with number of disagreements 
+       from the basetext optionally sorted by agreement'''
+    rows = []
+    for witness in collation.witnesses:
+        cells = [TableCell(text=witness.sigil, bgcolor='f2f2f2', style='text-align: center')]
+        variants_from_base = 0
+        for column in table.columns:
+            cell = column.tokens_per_witness.get(witness.sigil)
+            basetext_cell = column.tokens_per_witness.get(basetext_siglum)
+            cell_text = "".join(item.token_data["t"] for item in cell) if cell else "-"
+            base_text = "".join(item.token_data["t"] for item in basetext_cell) if basetext_cell else "-"
+            if cell_text != base_text:
+                variants_from_base += 1
+            cells.append(TableCell(text=fill(cell_text, 20), bgcolor="FF0000" if column.variant else "00FFFF", style='text-align: center'))
+        cells.append(TableCell(text=f'{variants_from_base}', bgcolor='f2f2f2', style='text-align: center')) 
+        rows.append(TableRow(cells=cells))
+    if sort_by_agreement:
+        rows = sorted(rows, key=lambda x: x.cells[-1].text)
+    x = Table(rows=rows)
+    return str(x)
 
 
 # create visualization of alignment table
 def display_alignment_table_as_html(at):
     pretty_table = create_table_visualization(at)
     html = pretty_table.get_html_string(formatting=True)
-    return display(HTML(html))
+    return html
 
 
 # export alignment table as CSV (or TSV)
@@ -65,8 +87,8 @@ def display_alignment_table_as_csv(at, output):
 
 
 # visualize the variant graph into SVG format
-def display_variant_graph_as_svg(graph, output):
-    a = graphviz.Digraph(format="svg", graph_attr={'rankdir': 'LR'})
+def display_variant_graph_as_svg(graph, output, graph_type):
+    a = graphviz.Digraph(format=graph_type, graph_attr={'rankdir': 'LR'})
     counter = 0
     mapping = {}
     ranking = VariantGraphRanking.of(graph)
@@ -121,5 +143,4 @@ def display_variant_graph_as_svg(graph, output):
     # dot = a.draw(prog='dot')
     # print(dot.decode(encoding='utf-8'))
     # # display using the IPython SVG module
-    svg = a.render()
-    return display(SVG(svg))
+    return a.render()
