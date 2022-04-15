@@ -40,10 +40,12 @@ def visualize_table_vertically_with_colors(table, collation):
     x = Table(header_row=sigli, rows=rows)
     return str(x)
 
-def visualize_table_horizontally_with_colors(table: cc.AlignmentTable, collation, basetext_siglum: str, sort_by_agreement):
+def visualize_table_horizontally_with_colors(table: cc.AlignmentTable, collation, segmentation: bool, basetext_siglum: str, sort_by_agreement, ignore_case_in_html2: bool):
     '''Return a horizontal HTML table with number of disagreements 
        from the basetext optionally sorted by agreement'''
     rows = []
+    indices = []
+    index = 2
     for witness in collation.witnesses:
         cells = [TableCell(text=witness.sigil, bgcolor='f2f2f2', style='text-align: center')]
         variants_from_base = 0
@@ -52,13 +54,37 @@ def visualize_table_horizontally_with_colors(table: cc.AlignmentTable, collation
             basetext_cell = column.tokens_per_witness.get(basetext_siglum)
             cell_text = "".join(item.token_data["t"] for item in cell) if cell else "-"
             base_text = "".join(item.token_data["t"] for item in basetext_cell) if basetext_cell else "-"
+            if ignore_case_in_html2:
+                cell_text = cell_text.lower()
+                base_text = base_text.lower()
             if cell_text != base_text:
+                bgcolor = 'fa9392'
                 variants_from_base += 1
-            cells.append(TableCell(text=fill(cell_text, 20), bgcolor="FF0000" if column.variant else "00FFFF", style='text-align: center'))
-        cells.append(TableCell(text=f'{variants_from_base}', bgcolor='f2f2f2', style='text-align: center')) 
+            elif witness.sigil == basetext_siglum:
+                bgcolor = 'ffffff'
+                if base_text == '-':
+                    indices.append('-')
+                else:
+                    indices.append(index)
+                    index += 2
+            else:
+                bgcolor = '99ffbb'
+            cells.append(TableCell(text=fill(cell_text, 20), bgcolor=bgcolor, style='text-align: center'))
+        cells.insert(1, TableCell(text=f'{variants_from_base}', bgcolor='f2f2f2', style='text-align: center')) 
         rows.append(TableRow(cells=cells))
     if sort_by_agreement:
-        rows = sorted(rows, key=lambda x: x.cells[-1].text)
+        rows = sorted(rows, key=lambda x: x.cells[1].text)
+    if not segmentation:
+        cells = []
+        headers = [TableCell('Wit', bgcolor='f2f2f2', style='text-align: center'), TableCell('Dist', bgcolor='f2f2f2', style='text-align: center')]
+        for i, column in zip(indices, table.columns):
+            if column.variant:
+                bgcolor = 'ffde57'
+            else:
+                bgcolor = 'f2f2f2'
+            cells.append(TableCell(i, bgcolor=bgcolor, style='text-align: center'))
+        headers.extend(cells)
+        rows.insert(0, headers)
     x = Table(rows=rows)
     return str(x)
 
