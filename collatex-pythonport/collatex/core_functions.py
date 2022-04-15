@@ -11,7 +11,7 @@ from collatex.exceptions import SegmentationError
 from collatex.experimental_astar_aligner import ExperimentalAstarAligner
 import json
 from collatex.edit_graph_aligner import EditGraphAligner
-from collatex.display_module import display_alignment_table_as_html, visualize_table_vertically_with_colors
+from collatex.display_module import display_alignment_table_as_html, visualize_table_vertically_with_colors, visualize_table_horizontally_with_colors
 from collatex.display_module import display_variant_graph_as_svg
 from collatex.display_module import display_alignment_table_as_csv
 from collatex.near_matching import perform_near_match
@@ -30,8 +30,11 @@ from collatex.near_matching import perform_near_match
 #   Wrapper element is always <cx:apparatus> in the CollateX namespace
 #   indent=True pretty-prints the output
 #       (for proofreading convenience only; does not observe proper white-space behavior)
-def collate(collation, output="table", layout="horizontal", segmentation=True, near_match=False, astar=False,
-            detect_transpositions=False, debug_scores=False, properties_filter=None, indent=False, graph_type: str='svg'):
+def collate(collation, basetext_siglum: str, output="table", layout="horizontal", 
+            segmentation=True, near_match=False, astar=False,
+            detect_transpositions=False, debug_scores=False, 
+            properties_filter=None, indent=False, graph_type: str='svg',
+            sort_by_agreement: bool=False):
     # collation may be collation or json; if it's the latter, use it to build a real collation
     if isinstance(collation, dict):
         json_collation = Collation()
@@ -72,8 +75,10 @@ def collate(collation, output="table", layout="horizontal", segmentation=True, n
         return export_alignment_table_as_json(table)
     if output == "html":
         return display_alignment_table_as_html(table)
-    if output == "html2":
+    if output == "html2" and layout == "vertical":
         return visualize_table_vertically_with_colors(table, collation)
+    if output == "html2" and layout == "horizontal":
+        return visualize_table_horizontally_with_colors(table, collation, basetext_siglum, sort_by_agreement)
     if output == "table":
         return table
     if output == "xml":
