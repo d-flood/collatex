@@ -14,15 +14,6 @@ import csv
 import io
 
 
-# optionally load the IPython dependencies
-try:
-    # d-flood: removed IPython support in favor of opening a file in a new browser tab
-
-    # import graphviz python bindings
-    import graphviz
-except:
-    pass
-
 
 def visualize_table_vertically_with_colors(table, collation):
     # print the table vertically
