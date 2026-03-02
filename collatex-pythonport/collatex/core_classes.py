@@ -9,7 +9,7 @@ Tokenizer, Witness, VariantGraph, CollationAlgorithm
 """
 import json
 import networkx as nx
-from _collections import deque
+from collections import deque
 from networkx.algorithms.dag import topological_sort
 import re
 from prettytable import PrettyTable
@@ -136,7 +136,7 @@ def visualizeTableHorizontal(table):
     for row in table.rows:
         cells = [row.header]
         t_list = [(token.token_data["t"] for token in cell) if cell else ["-"] for cell in row.cells]
-        cells.extend([re.sub('\s+$', '', "".join(cell)) for cell in t_list])
+        cells.extend([re.sub(r'\s+$', '', "".join(cell)) for cell in t_list])
         x.add_row(cells)
     # alignment can only be set after the field names are known.
     # since add_row sets the field names, it has to be set after x.add_row(cells)
@@ -281,7 +281,7 @@ class VariantGraph(object):
         return self.graph.out_edges(nbunch=node, data=data)
 
     def vertex_attributes(self, node):
-        return self.graph.node[node]
+        return self.graph.nodes[node]
 
     # Note: generator implementation
     def vertexWith(self, content):
@@ -334,7 +334,7 @@ def join(graph):
     while queue:
         vertex = queue.popleft()
         out_edges = graph.out_edges(vertex)
-        if len(out_edges) is 1:
+        if len(out_edges) == 1:
             (_, join_candidate) = next(iter(out_edges))
             can_join = join_candidate != end and len(graph.in_edges(join_candidate)) == 1
             if can_join:

@@ -20,7 +20,11 @@ setup(
     package_dir={'collatex':
                  'collatex'},
     include_package_data=True,
-    install_requires=['networkx','prettytable'
+    python_requires='>=3.13',
+    install_requires=[
+        'networkx==3.6.1',
+        'prettytable==3.17.0',
+        'rapidfuzz==3.14.3',
     ],
     license="GPLv3",
     zip_safe=False,
@@ -31,11 +35,8 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.13',
     ],
     test_suite='tests',
 )

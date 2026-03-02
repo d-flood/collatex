@@ -2,9 +2,9 @@
     Called by: collate() (in core_functions.py) with near_match=True, segmentation=False
 """
 from collatex.core_classes import VariantGraphRanking
-import Levenshtein
 from networkx.algorithms.dag import topological_sort
 from collections import defaultdict
+from collatex.string_similarity import similarity_ratio
 
 
 # Flatten a list of lists (goes only one level down)
@@ -73,7 +73,7 @@ def perform_near_match(graph, ranking):
                 # print(match_candidates)
                 levenshtein_dict = defaultdict(list)
                 for match_candidate in match_candidates:
-                    ratio = Levenshtein.ratio(str(source), str(match_candidate))
+                    ratio = similarity_ratio(str(source), str(match_candidate))
                     # print(source, match_candidate, ratio)
                     levenshtein_dict[ratio].append(match_candidate)
                 weight = max(levenshtein_dict)

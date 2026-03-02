@@ -14,12 +14,14 @@ from collatex.edit_graph_aligner import EditGraphAligner
 from collatex.display_module import display_alignment_table_as_html, visualize_table_vertically_with_colors
 from collatex.display_module import display_variant_graph_as_svg
 from collatex.display_module import display_alignment_table_as_csv
+from collatex.mermaid_adapter import render_variant_graph_as_mermaid
 from collatex.near_matching import perform_near_match
 
 
 # Valid options for output are:
 # "table" for the alignment table (default)
 # "graph" for the variant graph
+# "mermaid" for Mermaid flowchart text of the variant graph
 # "json" for the alignment table exported as JSON
 # "csv", "tsv" for CSV and TSV output
 # "xml" for the alignment table as pseudo-TEI XML
@@ -64,6 +66,8 @@ def collate(collation, output="table", layout="horizontal", segmentation=True, n
     # check which output format is requested: graph or table
     if output == "svg" or output == "svg_simple":
         return display_variant_graph_as_svg(graph, output)
+    if output == "mermaid":
+        return render_variant_graph_as_mermaid(graph)
     if output == "graph":
         return graph
     # create alignment table

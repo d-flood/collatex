@@ -8,15 +8,7 @@ from collatex.extended_suffix_array import Occurrence, BlockWitness, Block,\
 from operator import attrgetter
 from ClusterShell.RangeSet import RangeSet
 from queue import PriorityQueue
-# TODO: different in Python 2?
-# optionally load the Levenshtein dependency for near match functionality.
-# Consists of C code, needs to be compiled which is problematic on Windows.
-# There are pre-compiled binaries however, but this requires an extra step
-# during installation.
-try:
-    from Levenshtein import ratio
-except:
-    pass
+from collatex.string_similarity import similarity_ratio
 
 
 '''
@@ -127,7 +119,7 @@ class Scorer(object):
         result = self.match(token_a, token_b)
         if result==0:
             return 0
-        r = ratio(token_a.token_string, token_b.token_string)
+        r = similarity_ratio(token_a.token_string, token_b.token_string)
         # print(str(token_a)+" "+str(token_b)+" "+str(r))
         if r > 0.6:
             return 1

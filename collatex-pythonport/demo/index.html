@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CollateX Pyodide Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    body { font-family: ui-sans-serif, sans-serif; margin: 2rem; }
+    button { padding: 0.5rem 0.8rem; font-size: 1rem; }
+    pre { background: #f5f5f5; padding: 0.8rem; overflow: auto; }
+    #graph { border: 1px solid #ddd; padding: 0.8rem; min-height: 4rem; }
+    .controls { margin-bottom: 1rem; }
+    .witness-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .witness-id { width: 5rem; padding: 0.4rem; }
+    .witness-content { flex: 1; min-width: 18rem; padding: 0.4rem; }
+  </style>
+</head>
+<body>
+  <h1>CollateX in Pyodide</h1>
+  <p>This demo runs CollateX directly in the browser with Pyodide.</p>
+  <h2>Witnesses</h2>
+  <div id="witnesses" class="controls"></div>
+  <div class="controls">
+    <button id="add-witness" type="button">Add Witness</button>
+    <button id="run" type="button">Run Collation</button>
+  </div>
+  <h2>Alignment Table</h2>
+  <pre id="table">Not run yet.</pre>
+  <h2>Mermaid Graph</h2>
+  <div id="graph"></div>
+  <pre id="mermaid"></pre>
+
+  <script type="module">
+    import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
+
+    const sourceFiles = [
+      "collatex/linsuffarr.py",
+      "collatex/HTML.py",
+      "collatex/block.py",
+      "collatex/core_functions.py",
+      "collatex/transposition_handling.py",
+      "collatex/exceptions.py",
+      "collatex/near_matching.py",
+      "collatex/astar.py",
+      "collatex/mermaid_adapter.py",
+      "collatex/experimental_astar_aligner.py",
+      "collatex/tokenindex.py",
+      "collatex/suffix_based_scorer.py",
+      "collatex/__init__.py",
+      "collatex/extended_suffix_array.py",
+      "collatex/string_similarity.py",
+      "collatex/display_module.py",
+      "collatex/core_classes.py",
+      "collatex/edit_graph_aligner.py",
+      "ClusterShell/RangeSet.py",
+      "ClusterShell/__init__.py"
+    ];
+    let pyodidePromise = null;
+    let renderCounter = 0;
+
+    async function loadLocalSources(pyodide) {
+      for (const file of sourceFiles) {
+        const candidates = [
+          `../${file}`,
+          `/${file}`,
+          `${file}`
+        ];
+        let contents = null;
+        for (const candidate of candidates) {
+          const resp = await fetch(candidate);
+          if (resp.ok) {
+            contents = await resp.text();
+            break;
+          }
+        }
+        if (contents === null) {
+          throw new Error(
+            `Unable to fetch ${file}. Tried: ${candidates.join(", ")}. ` +
+            `Serve from repo root, or host collatex/ and ClusterShell/ beside demo/.`
+          );
+        }
+        const directory = file.split("/").slice(0, -1).join("/");
+        pyodide.FS.mkdirTree(directory);
+        pyodide.FS.writeFile(file, contents);
+      }
+    }
+
+    async function getPyodide() {
+      if (pyodidePromise) {
+        return pyodidePromise;
+      }
+      pyodidePromise = (async () => {
+        const pyodide = await loadPyodide();
+        await pyodide.loadPackage("micropip");
+        const micropip = pyodide.pyimport("micropip");
+        await micropip.install(["networkx", "prettytable"]);
+        await loadLocalSources(pyodide);
+        return pyodide;
+      })();
+      return pyodidePromise;
+    }
+
+    function addWitnessRow(id = "", content = "") {
+      const container = document.getElementById("witnesses");
+      const row = document.createElement("div");
+      row.className = "witness-row";
+
+      const idInput = document.createElement("input");
+      idInput.className = "witness-id";
+      idInput.type = "text";
+      idInput.placeholder = "ID";
+      idInput.value = id;
+
+      const textInput = document.createElement("input");
+      textInput.className = "witness-content";
+      textInput.type = "text";
+      textInput.placeholder = "Witness text";
+      textInput.value = content;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => {
+        row.remove();
+      });
+
+      row.appendChild(idInput);
+      row.appendChild(textInput);
+      row.appendChild(removeButton);
+      container.appendChild(row);
+    }
+
+    function collectWitnesses() {
+      const rows = [...document.querySelectorAll(".witness-row")];
+      const witnesses = [];
+      for (let i = 0; i < rows.length; i += 1) {
+        const idInput = rows[i].querySelector(".witness-id");
+        const textInput = rows[i].querySelector(".witness-content");
+        const content = textInput.value.trim();
+        if (!content) {
+          continue;
+        }
+        let id = idInput.value.trim();
+        if (!id) {
+          id = String.fromCharCode(65 + i);
+        }
+        witnesses.push({ id, content });
+      }
+      return witnesses;
+    }
+
+    async function runCollation() {
+      const tableEl = document.getElementById("table");
+      const mermaidEl = document.getElementById("mermaid");
+      const graphEl = document.getElementById("graph");
+      const witnesses = collectWitnesses();
+
+      if (witnesses.length < 2) {
+        tableEl.textContent = "Please enter at least two non-empty witnesses.";
+        return;
+      }
+
+      tableEl.textContent = "Loading Pyodide and running collation...";
+      const pyodide = await getPyodide();
+      pyodide.globals.set("witnesses_json", JSON.stringify({ witnesses }));
+
+      const result = await pyodide.runPythonAsync(`
+import json
+import sys
+sys.path.insert(0, ".")
+from collatex import Collation, collate
+
+payload = json.loads(witnesses_json)
+collation = Collation.create_from_dict(payload)
+table = str(collate(collation))
+mermaid = collate(collation, output="mermaid")
+(table, mermaid)
+      `);
+      const table = result.get(0);
+      const mermaidGraph = result.get(1);
+      tableEl.textContent = table;
+      mermaidEl.textContent = mermaidGraph;
+      renderCounter += 1;
+      const render = await mermaid.render(`collatex-graph-${renderCounter}`, mermaidGraph);
+      graphEl.innerHTML = render.svg;
+    }
+
+    document.getElementById("add-witness").addEventListener("click", () => {
+      addWitnessRow("", "");
+    });
+
+    document.getElementById("run").addEventListener("click", async () => {
+      try {
+        await runCollation();
+      } catch (err) {
+        document.getElementById("table").textContent = `Demo failed: ${err}`;
+      }
+    });
+
+    addWitnessRow("A", "The cat sat on the mat");
+    addWitnessRow("B", "The cat sits on that mat");
+  </script>
+</body>
+</html>

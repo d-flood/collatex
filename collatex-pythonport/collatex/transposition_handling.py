@@ -4,6 +4,7 @@
     @author: Ronald Haentjens Dekker
 '''
 from collatex.core_classes import VariantGraphRanking
+from functools import cmp_to_key
 
 # New transposition detection implementation, still beta quality
 # This implementation works with the new collation algorithm (LCP intervals and edit graph)
@@ -75,7 +76,7 @@ class TranspositionDetection(object):
 class PhraseMatchDetector(object):
     def _add_new_phrase_match_and_clear_buffer(self, phrase_matches, base_phrase, witness_phrase):
         if base_phrase:
-            phrase_matches.append(zip(base_phrase, witness_phrase)) 
+            phrase_matches.append(list(zip(base_phrase, witness_phrase)))
             del base_phrase[:]
             del witness_phrase[:]
 
@@ -102,7 +103,7 @@ class PhraseMatchDetector(object):
             witness_phrase.append(token)
             previous = base_vertex
         if base_phrase:
-            phrase_matches.append(zip(base_phrase, witness_phrase)) 
+            phrase_matches.append(list(zip(base_phrase, witness_phrase)))
         return phrase_matches
 
 #=================================================
@@ -128,7 +129,7 @@ class TranspositionDetector(object):
             index2 = phrasematches.index(pm2)
             return index1 - index2
 
-        phrasematches_graph_order = sorted(phrasematches, cmp=compare_phrasematches)
+        phrasematches_graph_order = sorted(phrasematches, key=cmp_to_key(compare_phrasematches))
 
         # map 1
         self.phrasematch_to_index = {}
@@ -137,7 +138,7 @@ class TranspositionDetector(object):
 
         # We calculate the index for all the phrase matches
         # First in witness order, then in graph order
-        phrasematches_graph_index = range(0, len(phrasematches))
+        phrasematches_graph_index = list(range(0, len(phrasematches)))
 
         phrasematches_witness_index = []
         for phrasematch in phrasematches:
@@ -176,7 +177,7 @@ class TranspositionDetector(object):
                 #TODO: the number of occurrences for that block
                 return len(pm1) - len(pm2)
 
-            sorted_phrasematches = sorted(non_transposed_phrasematches, cmp = comp2) 
+            sorted_phrasematches = sorted(non_transposed_phrasematches, key=cmp_to_key(comp2))
             transposedphrase = sorted_phrasematches[0]
 
             transposed_index = self.phrasematch_to_index[transposedphrase[0]]
