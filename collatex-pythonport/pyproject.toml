@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69", "wheel>=0.45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "collatex"
+version = "2.4"
+description = "CollateX is a collation tool."
+readme = "README.rst"
+requires-python = ">=3.13"
+license = { text = "GPLv3" }
+authors = [
+  { name = "Ronald Haentjens Dekker", email = "ronald.dekker@di.huc.knaw.nl" }
+]
+keywords = ["CollateX"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "networkx==3.6.1",
+  "prettytable==3.17.0",
+  "rapidfuzz==3.14.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/interedition/collatex"
+
+[tool.setuptools]
+packages = ["collatex", "ClusterShell"]
+include-package-data = true
