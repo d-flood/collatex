@@ -1,0 +1,12 @@
+export { Collation, collate } from './collation.js';
+export type { CollationOptions, CollationAlgorithm, InspectableCollationAlgorithm } from './collation.js';
+export { SimpleWitness } from './witness.js';
+export type { Witness } from './witness.js';
+export type { Token } from './token.js';
+export { EqualityTokenComparator, EditDistanceTokenComparator, editDistance, similarityRatio } from './token-comparator.js';
+export type { TokenComparator } from './token-comparator.js';
+export { VariantGraph, VariantGraphVertex } from './variant-graph.js';
+export { AlignmentTable } from './alignment-table.js';
+export type { AlignmentTableRow } from './alignment-table.js';
+export { TokenIndex, MarkerToken } from './token-index.js';
+export type { Block, BlockInstance } from './token-index.js';
