@@ -1,82 +1,83 @@
-import { SimpleWitness } from '#src/witness.js';
-import { VariantGraph, VariantGraphVertex } from '#src/variant-graph.js';
+import { SimpleWitness, tokenizePlainTextNormalized } from '#src/witness.js';
+import { VariantGraph, type VariantGraphVertex } from '#src/variant-graph.js';
 import { AlignmentTable } from '#src/alignment-table.js';
+import { EditGraphAligner } from '#src/collation.js';
 import type { Token } from '#src/token.js';
 import type { Witness } from '#src/witness.js';
 
 const SIGLA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-/**
- * Create SimpleWitness instances with sigla A, B, C, ...
- * Mirrors AbstractTest.createWitnesses()
- */
 export function createWitnesses(...contents: string[]): SimpleWitness[] {
-  return contents.map((content, i) => new SimpleWitness(SIGLA[i], content));
+  return contents.map((content, i) => new SimpleWitness(SIGLA[i]!, content));
 }
 
-/**
- * Collate witnesses and return alignment table.
- * Delegates to the collation engine (throws until implemented).
- */
 export function collateToTable(...contents: string[]): AlignmentTable {
   const witnesses = createWitnesses(...contents);
   return collateWitnessesToTable(...witnesses);
 }
 
-/**
- * Collate SimpleWitness instances and return alignment table.
- */
 export function collateWitnessesToTable(...witnesses: SimpleWitness[]): AlignmentTable {
   const graph = collateWitnesses(...witnesses);
   return AlignmentTable.from(graph);
 }
 
-/**
- * Collate witnesses and return the variant graph.
- */
 export function collateWitnesses(...witnesses: SimpleWitness[]): VariantGraph {
-  // This will delegate to the DekkerAlgorithm once implemented
-  throw new Error('collateWitnesses not implemented');
+  const graph = new VariantGraph();
+  if (witnesses.length === 0) return graph;
+  const algorithm = new EditGraphAligner();
+  algorithm.setMergeTranspositions(true);
+  algorithm.collate(graph, witnesses.map((witness) => witness.getTokens()));
+  return graph;
 }
 
-/**
- * Collate into an existing graph (for incremental collation).
- */
 export function collateIntoGraph(graph: VariantGraph, ...witnesses: SimpleWitness[]): void {
-  throw new Error('collateIntoGraph not implemented');
+  if (witnesses.length === 0) return;
+  const algorithm = new EditGraphAligner();
+  algorithm.setMergeTranspositions(true);
+  algorithm.collate(graph, witnesses.map((witness) => witness.getTokens()));
 }
 
-/**
- * Format alignment table row for a specific witness.
- * Produces |pipe|delimited|format| matching Java's AbstractTest.toString(table, witness).
- */
 export function tableToString(table: AlignmentTable, witness: Witness): string {
   return table.toStringForWitness(witness);
 }
 
-/**
- * Format the full alignment table (all witnesses).
- * Produces "A: |...\nB: |...\n" format.
- */
 export function tableToFullString(table: AlignmentTable): string {
   return table.toString();
 }
 
-// --- Fluent graph assertion builder ---
+function flattenWitnessPath(graph: VariantGraph, witness: Witness): Array<{
+  token: Token;
+  aligned: boolean;
+  witnessCount: number;
+}> {
+  const path = graph.pathForWitness(witness);
+  const flattened: Array<{ token: Token; aligned: boolean; witnessCount: number }> = [];
+  for (const vertex of path) {
+    if (vertex === graph.getStart() || vertex === graph.getEnd()) continue;
+    const witnessTokens = vertex.tokens().filter((token) => token.witness.sigil === witness.sigil);
+    const witnessCount = new Set(vertex.tokens().map((token) => token.witness.sigil)).size;
+    for (const token of witnessTokens) {
+      flattened.push({
+        token,
+        aligned: witnessCount > 1,
+        witnessCount,
+      });
+    }
+  }
+  return flattened;
+}
 
 export class GraphExpectation {
-  private graph: VariantGraph;
-  private witness: Witness;
-  private expectations: Array<{
+  private readonly expectations: Array<{
     tokens: string[];
     aligned: boolean;
     numberOfWitnesses?: number;
   }> = [];
 
-  constructor(graph: VariantGraph, witness: Witness) {
-    this.graph = graph;
-    this.witness = witness;
-  }
+  constructor(
+    private readonly graph: VariantGraph,
+    private readonly witness: Witness,
+  ) {}
 
   aligned(...tokens: string[]): this;
   aligned(numberOfWitnesses: number, ...tokens: string[]): this;
@@ -90,41 +91,51 @@ export class GraphExpectation {
       tokens = args as string[];
     }
     for (const token of tokens) {
-      const split = token.split(' ');
-      this.expectations.push({ tokens: split, aligned: true, numberOfWitnesses });
+      this.expectations.push({ tokens: tokenizePlainTextNormalized(token), aligned: true, numberOfWitnesses });
     }
     return this;
   }
 
   nonAligned(...tokens: string[]): this {
     for (const token of tokens) {
-      const split = token.split(' ');
-      this.expectations.push({ tokens: split, aligned: false });
+      this.expectations.push({ tokens: tokenizePlainTextNormalized(token), aligned: false });
     }
     return this;
   }
 
-  /** Check expectations against the graph. Throws descriptive error on mismatch. */
   check(): void {
-    // Walk graph vertices for this witness
-    // This is a stub — will work once graph traversal is implemented
-    throw new Error('GraphExpectation.check not implemented — graph traversal not yet available');
+    const actual = flattenWitnessPath(this.graph, this.witness);
+    const expected = this.expectations.flatMap((entry) =>
+      entry.tokens.map((token) => ({
+        token,
+        aligned: entry.aligned,
+        numberOfWitnesses: entry.numberOfWitnesses,
+      })),
+    );
+    if (actual.length !== expected.length) {
+      throw new Error(`Expected ${expected.length} tokens for ${this.witness.sigil}, found ${actual.length}`);
+    }
+    expected.forEach((entry, index) => {
+      const actualEntry = actual[index]!;
+      if (actualEntry.token.normalized !== entry.token.toLowerCase()) {
+        throw new Error(`Token mismatch at ${index}: expected ${entry.token}, found ${actualEntry.token.normalized}`);
+      }
+      if (actualEntry.aligned !== entry.aligned) {
+        throw new Error(`Alignment mismatch at ${index}: expected ${entry.aligned}, found ${actualEntry.aligned}`);
+      }
+      if (entry.numberOfWitnesses !== undefined && actualEntry.witnessCount !== entry.numberOfWitnesses) {
+        throw new Error(
+          `Witness-count mismatch at ${index}: expected ${entry.numberOfWitnesses}, found ${actualEntry.witnessCount}`,
+        );
+      }
+    });
   }
 }
 
-/**
- * Fluent graph assertion: expectGraph(graph, witness).aligned("the").nonAligned("black").aligned("cat")
- *
- * In tests, call .check() or use expectGraphMatches() helper.
- */
 export function expectGraph(graph: VariantGraph, witness: Witness): GraphExpectation {
   return new GraphExpectation(graph, witness);
 }
 
-/**
- * Assert that the graph matches the expected pattern for a witness.
- * This is the primary assertion helper for graph-based tests.
- */
 export function expectGraphMatches(graph: VariantGraph, witness: Witness): GraphExpectation {
   return new GraphExpectation(graph, witness);
 }

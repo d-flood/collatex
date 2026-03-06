@@ -1,8 +1,9 @@
-export { Collation, collate } from './collation.js';
+export { Collation, collate, EditGraphAligner } from './collation.js';
 export type { CollationOptions, CollationAlgorithm, InspectableCollationAlgorithm } from './collation.js';
-export { SimpleWitness } from './witness.js';
+export { SimpleWitness, PretokenizedWitness } from './witness.js';
 export type { Witness } from './witness.js';
-export type { Token } from './token.js';
+export { SimpleToken } from './token.js';
+export type { Token, TokenData } from './token.js';
 export { EqualityTokenComparator, EditDistanceTokenComparator, editDistance, similarityRatio } from './token-comparator.js';
 export type { TokenComparator } from './token-comparator.js';
 export { VariantGraph, VariantGraphVertex } from './variant-graph.js';
