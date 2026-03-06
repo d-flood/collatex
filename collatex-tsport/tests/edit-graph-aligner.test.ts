@@ -6,6 +6,7 @@ import {
   collateWitnessesToTable,
   expectGraphMatches,
 } from './test-helpers.js';
+import { SimpleWitness } from '#src/witness.js';
 
 describe('EditGraphMultiWitnessAligner', () => {
   // from EditGraphMultiWitnessAlignerTest.java:testMWADavidBirnbaum
@@ -174,11 +175,47 @@ describe('EditGraphMultiWitnessAligner', () => {
   });
 
   // from EditGraphMultiWitnessAlignerTest.java:testAlignWithLongestMatch (Ignored)
-  it.skip('testAlignWithLongestMatch', () => {
+  it('testAlignWithLongestMatch', () => {
     const w = createWitnesses('a g a g c t a g t', 'a g c t');
     const graph = collateWitnesses(...w);
     expectGraphMatches(graph, w[0]).nonAligned('a g').aligned('a g c t').nonAligned('a g t').check();
     expectGraphMatches(graph, w[1]).aligned('a g c t').check();
+
+    const w2 = createWitnesses('a g c t', 'a g a g c t a g t');
+    const graph2 = collateWitnesses(...w2);
+    expectGraphMatches(graph2, w2[0]).aligned('a g c t').check();
+    expectGraphMatches(graph2, w2[1]).nonAligned('a g').aligned('a g c t').nonAligned('a g t').check();
+  });
+
+  it('collates many duplicate short witnesses without graph blowup', () => {
+    const witnesses = Array.from({ length: 1000 }, (_, index) =>
+      new SimpleWitness(index < 900 ? `A${index}` : `B${index}`, index < 900 ? 'alpha beta gamma delta' : 'alpha beta epsilon delta'),
+    );
+    const graph = collateWitnesses(...witnesses);
+    const contentVertices = graph
+      .vertices()
+      .filter((vertex) => vertex !== graph.getStart() && vertex !== graph.getEnd());
+
+    expect(graph.witnesses().size).toBe(1000);
+    expect(contentVertices.length).toBe(5);
+    expect(
+      contentVertices.find((vertex) => vertex.tokens().some((token) => token.normalized === 'alpha'))?.witnesses().size,
+    ).toBe(1000);
+  });
+
+  it('collates many mostly-unique short witnesses', () => {
+    const witnesses = Array.from({ length: 250 }, (_, index) =>
+      new SimpleWitness(`U${index}`, `alpha beta variant${index} gamma tail${index % 11} omega`),
+    );
+    const graph = collateWitnesses(...witnesses);
+    const contentVertices = graph
+      .vertices()
+      .filter((vertex) => vertex !== graph.getStart() && vertex !== graph.getEnd());
+
+    expect(graph.witnesses().size).toBe(250);
+    expect(
+      contentVertices.find((vertex) => vertex.tokens().some((token) => token.normalized === 'alpha'))?.witnesses().size,
+    ).toBe(250);
   });
 });
 

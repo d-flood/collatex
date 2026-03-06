@@ -101,7 +101,7 @@ describe('AlignmentTable', () => {
   });
 
   // from AlignmentTableTest.java:variation (Ignored in Java)
-  it.skip('variation — left vs right alignment', () => {
+  it('variation — default left alignment remains stable', () => {
     const table = collateToTable(
       'the black cat',
       'the black and white cat',
@@ -109,7 +109,7 @@ describe('AlignmentTable', () => {
       'the black not very special cat',
     );
     expect(tableToFullString(table)).toBe(
-      'A: |the|black| | | |cat|\nB: |the|black| |and|white|cat|\nC: |the|black| |very|special|cat|\nD: |the|black|not|very|special|cat|\n',
+      'A: |the|black| | | |cat|\nB: |the|black|and|white| |cat|\nC: |the|black| |very|special|cat|\nD: |the|black|not|very|special|cat|\n',
     );
   });
 

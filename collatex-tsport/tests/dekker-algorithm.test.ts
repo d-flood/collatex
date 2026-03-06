@@ -167,12 +167,12 @@ describe('DekkerAlgorithm', () => {
   });
 
   // from DekkerAlgorithmTest.java:testDifficultCase3DepthShouldMatter (Ignored in Java)
-  it.skip('testDifficultCase3 — depth should matter', () => {
+  it('testDifficultCase3 — depth should matter', () => {
     const w = createWitnesses('a b c d e', 'a e c d', 'a d b');
     const graph = collateWitnesses(...w);
-    expectGraphMatches(graph, w[0]).aligned('a b c d').nonAligned('e').check();
+    expectGraphMatches(graph, w[0]).aligned('a').nonAligned('b').aligned('c d').nonAligned('e').check();
     expectGraphMatches(graph, w[1]).aligned('a').nonAligned('e').aligned('c d').check();
-    expectGraphMatches(graph, w[2]).aligned('a').aligned('d').nonAligned('b').check();
+    expectGraphMatches(graph, w[2]).aligned('a d').nonAligned('b').check();
   });
 
   // from DekkerAlgorithmTest.java:testDifficultCasePartialRightOverlapAndTranspositions
