@@ -10,9 +10,10 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "bench:many-short": "bun bench/many-short-witnesses.ts"
+    "bench:many-short": "tsx bench/many-short-witnesses.ts"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
